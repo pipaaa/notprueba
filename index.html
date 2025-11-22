@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PlayView</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c3aed;--muted:#9aa4b2}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#051026 0%,#071833 100%);color:#e6eef8}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));border-radius:14px;padding:28px;box-shadow:0 8px 30px rgba(3,7,18,0.6);width:100%;max-width:820px}
+    h1{margin:0 0 6px;font-size:28px;letter-spacing:-0.4px}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+    .count{display:flex;gap:12px;font-weight:700}
+    .unit{background:rgba(255,255,255,0.03);padding:18px 22px;border-radius:10px;min-width:92px;text-align:center}
+    .num{font-size:34px}
+    .lbl{font-size:12px;color:var(--muted);margin-top:6px}
+    .footer{margin-top:20px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .action{display:flex;gap:12px}
+    a.btn{background:var(--accent);color:white;padding:10px 14px;border-radius:9px;text-decoration:none;font-weight:600}
+    .embed{margin-top:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);height:520px}
+    .hidden{display:none}
+    .notice{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;color:var(--muted);font-size:13px}
+    @media (max-width:640px){.count{flex-direction:row;flex-wrap:wrap}.unit{min-width:72px;padding:12px 10px}.num{font-size:26px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main">
+      <h1>PlayView</h1>
+      <p class="lead">Cuenta atrás hasta las <strong>16:18</strong>. Cuando llegue la hora, se mostrará el enlace configurado.</p>
+
+      <div id="before">
+        <div class="count" aria-live="polite">
+          <div class="unit"><div class="num" id="days">0</div><div class="lbl">días</div></div>
+          <div class="unit"><div class="num" id="hours">00</div><div class="lbl">horas</div></div>
+          <div class="unit"><div class="num" id="minutes">00</div><div class="lbl">minutos</div></div>
+          <div class="unit"><div class="num" id="seconds">00</div><div class="lbl">segundos</div></div>
+        </div>
+
+        <div class="footer">
+          <div class="notice">Si la hora ya ha pasado hoy, la cuenta atrás irá hasta las 16:18 del día siguiente (zona horaria local del navegador).</div>
+          <div class="action"><a class="btn" id="openLink" href="#" target="_blank" rel="noopener">Abrir enlace ahora</a></div>
+        </div>
+      </div>
+
+      <div id="after" class="hidden">
+        <div class="notice">Se ha alcanzado 16:18 — mostrando el contenido del enlace. Si el sitio niega la inserción en un iframe, puedes abrirlo en pestaña nueva con el botón.</div>
+        <div class="embed" id="embedContainer">
+          <!-- iframe se insertará aquí -->
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+          <a class="btn" id="openNow" href="https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM" target="_blank" rel="noopener">Abrir en nueva pestaña</a>
+          <button id="showLinkText" style="background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--muted)">Mostrar URL</button>
+        </div>
+        <pre id="urlText" class="hidden" style="margin-top:8px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.25);overflow:auto;font-size:13px">https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM</pre>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const targetHour = 16, targetMinute = 18;
+      const now = new Date();
+      // Build target for today at 16:18 in local timezone
+      function nextTarget(){
+        const t = new Date();
+        t.setHours(targetHour, targetMinute, 0, 0);
+        if (t <= new Date()) {
+          // already passed -> next day
+          t.setDate(t.getDate() + 1);
+        }
+        return t;
+      }
+
+      const target = nextTarget();
+      const openLink = document.getElementById('openLink');
+      const openNow = document.getElementById('openNow');
+      const url = 'https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM';
+      openLink.href = url;
+      openNow.href = url;
+
+      function pad(n){return String(n).padStart(2,'0')}
+
+      const daysEl = document.getElementById('days');
+      const hoursEl = document.getElementById('hours');
+      const minutesEl = document.getElementById('minutes');
+      const secondsEl = document.getElementById('seconds');
+      const before = document.getElementById('before');
+      const after = document.getElementById('after');
+      const embedContainer = document.getElementById('embedContainer');
+      const showLinkText = document.getElementById('showLinkText');
+      const urlText = document.getElementById('urlText');
+
+      function update(){
+        const now = new Date();
+        const diff = target - now;
+        if (diff <= 0){
+          // arrived
+          clearInterval(timer);
+          before.classList.add('hidden');
+          after.classList.remove('hidden');
+          // try to embed in iframe
+          try{
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = '0';
+            embedContainer.appendChild(iframe);
+            // if iframe fails due to X-Frame-Options, user can click openNow
+          }catch(e){
+            embedContainer.innerHTML = '<div style="padding:18px;color:var(--muted)">No se pudo mostrar en iframe — usa "Abrir en nueva pestaña".</div>';
+          }
+          return;
+        }
+        const s = Math.floor(diff/1000);
+        const days = Math.floor(s/86400);
+        const hours = Math.floor((s%86400)/3600);
+        const mins = Math.floor((s%3600)/60);
+        const secs = s%60;
+        daysEl.textContent = days;
+        hoursEl.textContent = pad(hours);
+        minutesEl.textContent = pad(mins);
+        secondsEl.textContent = pad(secs);
+      }
+
+      const timer = setInterval(update,1000);
+      update();
+
+      showLinkText.addEventListener('click',()=>{
+        urlText.classList.toggle('hidden');
+      });
+
+    })();
+  </script>
+</body>
+</html>
