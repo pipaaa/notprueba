@@ -3,164 +3,190 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PlayView</title>
+  <title>Stream - Partido en directo</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c3aed;--muted:#9aa4b2}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#051026 0%,#071833 100%);color:#e6eef8}
-    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:28px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));border-radius:14px;padding:28px;box-shadow:0 8px 30px rgba(3,7,18,0.6);width:100%;max-width:1100px}
-    h1{margin:0 0 6px;font-size:28px;letter-spacing:-0.4px}
-    p.lead{margin:0 0 18px;color:var(--muted)}
-    .count{display:flex;gap:12px;font-weight:700}
-    .unit{background:rgba(255,255,255,0.03);padding:18px 22px;border-radius:10px;min-width:92px;text-align:center}
-    .num{font-size:34px}
-    .lbl{font-size:12px;color:var(--muted);margin-top:6px}
-    .footer{margin-top:20px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .action{display:flex;gap:12px}
-    a.btn{background:var(--accent);color:white;padding:10px 14px;border-radius:9px;text-decoration:none;font-weight:600}
-    .embed{margin-top:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.04);height:620px;position:relative}
-    .hidden{display:none}
-    .notice{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;color:var(--muted);font-size:13px}
-    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-    .error{color:#ffb4b4}
-    @media (max-width:640px){.count{flex-direction:row;flex-wrap:wrap}.unit{min-width:72px;padding:12px 10px}.num{font-size:26px}.embed{height:420px}}
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: #0f1720;
+      color: #e6eef6;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    }
+
+    h1 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .notice {
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,0.04);
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .controls {
+      display:flex;
+      gap:8px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      background: #0ea5a5;
+      color: #032024;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(14,165,165,0.14);
+    }
+
+    button.ghost {
+      background: transparent;
+      color: #cbd5e1;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    #streamContainer {
+      display: none; /* oculto por defecto */
+      max-width: 900px;
+      margin: 20px auto 0 auto;
+      text-align: center;
+      background: #000;
+      border-radius: 12px;
+      padding: 15px;
+    }
+
+    iframe {
+      width: 100%;
+      max-width: 900px;
+      height: 520px;
+      border: 0;
+      border-radius: 10px;
+      background: #000;
+    }
+
+    .meta {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #9aa7b8;
+    }
+
+    .warning {
+      color: #ffb86b;
+      font-weight: 600;
+    }
+
+    @media (max-width: 780px) {
+      iframe { height: 360px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" role="main">
-      <h1>PlayView</h1>
-      <p class="lead">Cuenta atrás hasta las <strong>16:18</strong>. A las 16:18 se intentará reproducir el streaming directamente dentro de la página.</p>
+  <div class="container">
+    <h1>Stream — Ver partido</h1>
 
-      <div id="before">
-        <div class="count" aria-live="polite">
-          <div class="unit"><div class="num" id="days">0</div><div class="lbl">días</div></div>
-          <div class="unit"><div class="num" id="hours">00</div><div class="lbl">horas</div></div>
-          <div class="unit"><div class="num" id="minutes">00</div><div class="lbl">minutos</div></div>
-          <div class="unit"><div class="num" id="seconds">00</div><div class="lbl">segundos</div></div>
-        </div>
-
-        <div class="footer">
-          <div class="notice">Si la hora ya ha pasado hoy, la cuenta atrás irá hasta las 16:18 del día siguiente (zona horaria local del navegador).</div>
-          <div class="action"><a class="btn" id="openLink" href="#" target="_blank" rel="noopener">Abrir enlace ahora</a></div>
-        </div>
-      </div>
-
-      <div id="after" class="hidden">
-        <div class="notice">Se ha alcanzado 16:18 — intentando reproducir el streaming incrustado en la página.</div>
-        <div class="embed" id="embedContainer">
-          <div class="overlay" id="loadingOverlay">Cargando contenido…</div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-          <a class="btn" id="openNow" href="https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM" target="_blank" rel="noopener">Abrir en nueva pestaña</a>
-          <button id="showLinkText" style="background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--muted)">Mostrar URL</button>
-        </div>
-        <pre id="urlText" class="hidden" style="margin-top:8px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.25);overflow:auto;font-size:13px">https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM</pre>
-      </div>
-
+    <div class="notice">
+      <strong>Aviso:</strong> Comprueba siempre la legalidad y la seguridad del enlace antes de reproducir. Algunos sitios de streaming no autorizados pueden contener malware o violar derechos de autor. Usa esta página sólo para contenidos que tengas derecho a mostrar o con permiso del propietario.
     </div>
+
+    <div class="controls">
+      <!-- Botones -->
+      <button id="showBtn">Mostrar stream</button>
+      <button id="hideBtn" class="ghost">Ocultar stream</button>
+      <button id="openNewTab" class="ghost">Abrir en pestaña nueva</button>
+    </div>
+
+    <!-- Contenedor del iframe (oculto hasta que se pulse mostrar) -->
+    <div id="streamContainer" aria-hidden="true">
+      <iframe id="playerFrame"
+        src=""
+        allowfullscreen
+        sandbox="allow-forms allow-same-origin allow-scripts allow-popups allow-modals"
+        title="Stream del partido"
+      ></iframe>
+
+      <div class="meta">
+        Si el reproductor no carga puede deberse a que el servidor impide ser embebido (X-Frame-Options / CSP) o a problemas del sitio.
+        <div style="margin-top:6px;">Estado: <span id="status">oculto</span></div>
+      </div>
+    </div>
+
+    <p style="margin-top:14px; font-size:13px; color:#9aa7b8;">
+      Nota técnica: este ejemplo añade el `src` al `iframe` sólo cuando el usuario pulsa "Mostrar stream" (esto evita que el navegador intente cargar automáticamente recursos externos al abrir la página).
+    </p>
   </div>
 
   <script>
-    (function(){
-      const targetHour = 16, targetMinute = 18;
-      function nextTarget(){
-        const t = new Date();
-        t.setHours(targetHour, targetMinute, 0, 0);
-        if (t <= new Date()) t.setDate(t.getDate() + 1);
-        return t;
+    // --- URL proporcionada por el usuario ---
+    // He colocado aquí el enlace que pediste. Si prefieres puedes cambiarlo.
+    const streamUrl = "https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM";
+
+    const showBtn = document.getElementById("showBtn");
+    const hideBtn = document.getElementById("hideBtn");
+    const openNewTab = document.getElementById("openNewTab");
+    const streamContainer = document.getElementById("streamContainer");
+    const playerFrame = document.getElementById("playerFrame");
+    const status = document.getElementById("status");
+
+    showBtn.addEventListener("click", () => {
+      // Asignamos el src al iframe sólo cuando el usuario lo solicita
+      if (!playerFrame.src) {
+        playerFrame.src = streamUrl;
       }
-      const target = nextTarget();
-      const url = 'https://jack85d6.buglfactsg0zgcbattle.shop/es/football/spanish-la-liga-4209850/fc-barcelona-vs-athletic-club.html?icg=RVM';
-      document.getElementById('openLink').href = url;
-      document.getElementById('openNow').href = url;
+      streamContainer.style.display = "block";
+      streamContainer.setAttribute("aria-hidden", "false");
+      status.textContent = "intentando cargar...";
+    });
 
-      function pad(n){return String(n).padStart(2,'0')}
-      const daysEl = document.getElementById('days');
-      const hoursEl = document.getElementById('hours');
-      const minutesEl = document.getElementById('minutes');
-      const secondsEl = document.getElementById('seconds');
-      const before = document.getElementById('before');
-      const after = document.getElementById('after');
-      const embedContainer = document.getElementById('embedContainer');
-      const loadingOverlay = document.getElementById('loadingOverlay');
-      const showLinkText = document.getElementById('showLinkText');
-      const urlText = document.getElementById('urlText');
+    hideBtn.addEventListener("click", () => {
+      // Para liberar recursos quitamos el src
+      playerFrame.src = "";
+      streamContainer.style.display = "none";
+      streamContainer.setAttribute("aria-hidden", "true");
+      status.textContent = "oculto";
+    });
 
-      function update(){
-        const now = new Date();
-        const diff = target - now;
-        if (diff <= 0){
-          clearInterval(timer);
-          before.classList.add('hidden');
-          after.classList.remove('hidden');
-          tryEmbed();
-          return;
+    openNewTab.addEventListener("click", () => {
+      // Abrir en pestaña nueva — útil si el iframe no permite embeberse
+      window.open(streamUrl, "_blank", "noopener");
+    });
+
+    // Intentamos detectar carga (no siempre fiable por restricciones CORS / iframe)
+    playerFrame.addEventListener("load", () => {
+      // Si se dispara 'load' es probable que el recurso se haya cargado en el iframe
+      status.textContent = "cargado (si el sitio permite embeber)";
+    });
+
+    // Un simple timeout para avisar si tarda demasiado
+    let loadCheckTimer;
+    showBtn.addEventListener("click", () => {
+      clearTimeout(loadCheckTimer);
+      loadCheckTimer = setTimeout(() => {
+        if (streamContainer.style.display === "block" && status.textContent !== "cargado (si el sitio permite embeber)") {
+          status.textContent = "probablemente bloqueado por el origen (X-Frame-Options / CSP) o problema de red";
         }
-        const s = Math.floor(diff/1000);
-        const days = Math.floor(s/86400);
-        const hours = Math.floor((s%86400)/3600);
-        const mins = Math.floor((s%3600)/60);
-        const secs = s%60;
-        daysEl.textContent = days;
-        hoursEl.textContent = pad(hours);
-        minutesEl.textContent = pad(mins);
-        secondsEl.textContent = pad(secs);
-      }
-
-      const timer = setInterval(update,1000);
-      update();
-
-      showLinkText.addEventListener('click',()=> urlText.classList.toggle('hidden'));
-
-      // Try multiple embedding strategies. Note: remote site can prevent embedding with X-Frame-Options or CSP.
-      function tryEmbed(){
-        // 1) Try iframe embed
-        const iframe = document.createElement('iframe');
-        iframe.src = url;
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = '0';
-        iframe.onload = function(){
-          // If we can access contentWindow.location, embedding succeeded (same-origin). For cross-origin, onload may still fire even if the page blocks framing.
-          setTimeout(()=>{
-            // Heuristic: attempt to access document; if blocked, assume framing allowed but cross-origin; still show iframe. However if server sends X-Frame-Options DENY, iframe will be replaced by browser's block page or nothing.
-            try{
-              const cw = iframe.contentWindow;
-              // Accessing href will throw on cross-origin; we ignore errors.
-              const href = cw.location && cw.location.href;
-            }catch(e){
-              // cross-origin but iframe likely loaded
-            }
-            loadingOverlay.style.display = 'none';
-          },300);
-        };
-        iframe.onerror = function(){
-          // onerror may not fire for iframe X-Frame-Options denial — handle with timeout fallback
-        };
-        embedContainer.appendChild(iframe);
-
-        // 2) Fallback timeout: if after 3s embedding isn't visible or replaced, show message and offer direct open
-        setTimeout(()=>{
-          // if iframe has zero height or no content, treat as failure
-          const rect = iframe.getBoundingClientRect();
-          const failed = (rect.width === 0 || rect.height === 0) || embedContainer.innerText.toLowerCase().includes('refused') || embedContainer.innerText.toLowerCase().includes('blocked');
-          if (failed){
-            embedContainer.innerHTML = '<div style="padding:18px;color:var(--muted)"><div class="error">No ha sido posible incrustar el streaming en la página. Es probable que el sitio remoto impida su inclusión (X-Frame-Options o Content-Security-Policy).</div><div style="margin-top:8px">Puedes abrirlo en una nueva pestaña con el botón "Abrir en nueva pestaña" o, si tienes acceso a un origen propio, usar un proxy servidor para servir el stream y permitir la incrustación.</div></div>';
-            loadingOverlay.style.display = 'none';
-          }
-        },3000);
-
-        // 3) If the remote link was a direct HLS/MP4 link (we don't know), we also include a hidden <video> tag option
-        // User could replace `directStreamUrl` with an actual .m3u8 or .mp4 URL for native playback.
-        const hint = document.createElement('div');
-        hint.style.marginTop = '6px';
-        hint.style.color = 'var(--muted)';
-        hint.innerHTML = 'Si dispones de la URL directa al flujo (p. ej. .m3u8 o .mp4), sustitúyela en el código para reproducir con el reproductor nativo.';
-        embedContainer.parentNode.insertBefore(hint, embedContainer.nextSibling);
-      }
-
-    })();
+      }, 6000);
+    });
   </script>
 </body>
 </html>
